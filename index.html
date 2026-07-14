@@ -60,8 +60,11 @@
   main{ padding: 34px 6vw 0; max-width:1400px; margin:0 auto; }
   section{ margin-bottom: 46px; }
   .section-head{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .section-head .right{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   h2{ font-family: Georgia, 'Times New Roman', serif; font-size:1.4rem; color: var(--gold-soft); margin:0; }
-  .hint{ color: var(--text-dim); font-size:.85rem; }
+  .hint{ color: var(--text-dim); font-size:.78rem; }
+  .hint.ok{ color: var(--green); }
+  .hint.warn{ color: var(--amber); }
 
   /* metrics */
   .metrics-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:22px; }
@@ -90,19 +93,46 @@
   .hero-stat .num{ font-family: Georgia, serif; font-size:2.4rem; color:#fff; font-weight:700; }
   .hero-stat .label{ color:#f1d9d4; font-size:.85rem; }
 
-  /* kanban */
-  .filter-bar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  /* filter + add bar */
+  .filter-bar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
   .filter-bar input, .filter-bar select{
     background: var(--bg-soft); border:1px solid var(--card-border); color:var(--text);
     padding:9px 12px; border-radius:8px; font-size:.88rem; outline:none;
   }
   .filter-bar input::placeholder{ color: var(--text-dim); }
-  .kanban{ display:grid; grid-template-columns: repeat(5, minmax(220px,1fr)); gap:16px; overflow-x:auto; }
-  .col{ background: var(--bg-soft); border:1px solid var(--card-border); border-radius:12px; padding:14px; min-height:120px; }
+  .add-btn{
+    background: var(--gold); color:#241c0f; border:none; padding:9px 16px; border-radius:8px;
+    font-size:.85rem; font-weight:700; cursor:pointer; margin-left:auto;
+  }
+  .add-btn:hover{ filter:brightness(1.08); }
+
+  .add-form{
+    display:none; gap:10px; flex-wrap:wrap; align-items:center;
+    background: var(--bg-soft); border:1px solid var(--card-border); border-radius:12px;
+    padding:16px; margin-bottom:18px;
+  }
+  .add-form.open{ display:flex; }
+  .add-form input, .add-form select{
+    background: var(--bg); border:1px solid var(--card-border); color:var(--text);
+    padding:9px 12px; border-radius:8px; font-size:.85rem; outline:none;
+  }
+  .add-form button{ padding:9px 16px; border-radius:8px; border:none; font-size:.85rem; cursor:pointer; font-weight:700; }
+  .btn-save{ background: var(--green); color:#0e1f14; }
+  .btn-cancel{ background: transparent; border:1px solid var(--card-border) !important; color: var(--text-dim); }
+
+  /* kanban */
+  .kanban{ display:flex; gap:26px; overflow-x:auto; padding-bottom:12px; }
+  .grupo{ flex: 0 0 auto; }
+  .grupo-label{
+    font-size:.68rem; text-transform:uppercase; letter-spacing:.7px; font-weight:700;
+    color: var(--text-dim); margin-bottom:8px; padding-left:2px;
+  }
+  .grupo-cols{ display:flex; gap:12px; }
+  .col{ width:220px; flex:0 0 220px; background: var(--bg-soft); border:1px solid var(--card-border); border-radius:12px; padding:14px; min-height:120px; }
   .col-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .col-head .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:7px; }
-  .col-head .name{ font-size:.85rem; font-weight:600; color:var(--text); }
-  .col-head .count{ background: rgba(255,255,255,.08); border-radius:999px; padding:2px 9px; font-size:.75rem; color:var(--text-dim); }
+  .col-head .name{ font-size:.8rem; font-weight:600; color:var(--text); }
+  .col-head .count{ background: rgba(255,255,255,.08); border-radius:999px; padding:2px 9px; font-size:.72rem; color:var(--text-dim); }
   .card{
     background: var(--card); border:1px solid var(--card-border); border-radius:10px;
     padding:12px; margin-bottom:10px; font-size:.85rem;
@@ -115,6 +145,10 @@
   .prazo.atrasado{ color: var(--red); font-weight:600; }
   .prazo.proximo{ color: var(--amber); font-weight:600; }
   .empty-col{ color: var(--text-dim); font-size:.78rem; text-align:center; padding:20px 4px; }
+  .status-select{
+    width:100%; margin-top:10px; background: rgba(0,0,0,.28); border:1px solid var(--card-border); color:var(--text);
+    padding:6px 8px; border-radius:6px; font-size:.72rem; outline:none; cursor:pointer;
+  }
 
   /* how-to panel */
   .howto-toggle{
@@ -133,12 +167,10 @@
 
   footer{ text-align:center; color: var(--text-dim); font-size:.78rem; padding:30px 6vw 0; }
 
-  @media (max-width: 900px){
-    .kanban{ grid-template-columns: 1fr 1fr; }
-  }
   @media (max-width: 560px){
-    .kanban{ grid-template-columns: 1fr; }
     .tile-grid{ grid-template-columns: 1fr 1fr; }
+    .col{ width:190px; flex-basis:190px; }
+    .add-btn{ margin-left:0; }
   }
 </style>
 </head>
@@ -198,33 +230,45 @@
   <section>
     <div class="section-head">
       <h2>Demandas em produção</h2>
-      <button class="howto-toggle" onclick="document.getElementById('howto-demandas').classList.toggle('open')">Como atualizar as demandas?</button>
+      <div class="right">
+        <span class="hint" id="cloud-status"></span>
+        <button class="howto-toggle" onclick="document.getElementById('howto-demandas').classList.toggle('open')">Como funciona a edição?</button>
+      </div>
     </div>
 
     <div class="filter-bar">
       <input type="text" id="busca" placeholder="Buscar por título, tipo ou responsável...">
       <select id="filtroTipo"><option value="">Todos os tipos</option></select>
       <select id="filtroResp"><option value="">Todos os responsáveis</option></select>
+      <button class="add-btn" onclick="toggleForm()">+ Nova demanda</button>
+    </div>
+
+    <div class="add-form" id="add-form">
+      <input id="novoTitulo" placeholder="Título da demanda" style="flex:1 1 240px;">
+      <input id="novoTipo" placeholder="Tipo (Reels, Carrossel, Story...)">
+      <input id="novoResp" placeholder="Responsável">
+      <input id="novoPrazo" type="date">
+      <select id="novoStatus"></select>
+      <button class="btn-save" onclick="adicionarDemanda()">Adicionar</button>
+      <button class="btn-cancel" onclick="toggleForm()">Cancelar</button>
     </div>
 
     <div class="kanban" id="kanban"></div>
 
     <div class="howto" id="howto-demandas">
-      <h4>Passo a passo — atualizar demandas (a cada 15 dias)</h4>
+      <h4>Como editar as demandas</h4>
       <ol>
-        <li>Abra este arquivo <code>.html</code> num editor de texto.</li>
-        <li>Procure o bloco <code>const demandas = [ ... ]</code> perto do fim do arquivo.</li>
-        <li>Cada demanda é um bloco entre chaves <code>{'{'} {'}'}</code>. Copie um bloco existente pra criar uma demanda nova, ou edite o campo <code>status</code> de uma já existente.</li>
-        <li>Status possíveis: <code>briefing</code>, <code>producao</code>, <code>aprovacao</code>, <code>agendado</code>, <code>publicado</code>.</li>
-        <li>Salve o arquivo. As colunas do quadro se atualizam sozinhas com base nesses status.</li>
+        <li><strong>Direto no site:</strong> cada card tem um menu de status na parte de baixo — é só escolher o novo status ali que fica salvo automaticamente (visível pra qualquer pessoa que abrir esse link depois). Use o botão <strong>+ Nova demanda</strong> pra cadastrar algo novo.</li>
+        <li><strong>Pelo código (alternativa):</strong> abra o arquivo <code>.html</code> num editor de texto, procure o bloco <code>let demandas = [ ... ]</code> perto do fim do arquivo, e edite os campos manualmente. Use isso só se quiser reorganizar tudo de uma vez.</li>
       </ol>
+      <p id="howto-cloud-note">As mudanças feitas no site são salvas num armazenamento na nuvem configurado pela Hadassa.</p>
     </div>
   </section>
 
 </main>
 
 <footer>
-  Página estática atualizada quinzenalmente por Hadassa · Métricas via Instagram Insights (Dashboard profissional)
+  Página atualizada quinzenalmente (métricas) e em tempo real (demandas) · Instagram Insights + edição colaborativa
 </footer>
 
 <script>
@@ -232,20 +276,21 @@
    🎷 ÁREA DE DADOS — é só isso aqui que precisa mudar a cada 15 dias
    ====================================================================== */
 
-// ---- 1) DEMANDAS ----------------------------------------------------
-// status possíveis: "briefing" | "producao" | "aprovacao" | "agendado" | "publicado"
-// tipo: texto livre (ex: "Reels", "Carrossel", "Story", "Foto")
-// prazo: formato "AAAA-MM-DD"
-const demandas = [
-  { titulo: "Reels: bastidores da palestra na Elo Health", tipo: "Reels", status: "publicado", prazo: "2026-07-08", responsavel: "Hadassa" },
-  { titulo: "Carrossel: os 5 pilares do Jazz Corporativo", tipo: "Carrossel", status: "agendado", prazo: "2026-07-17", responsavel: "Hadassa" },
-  { titulo: "Story: enquete sobre próximos temas", tipo: "Story", status: "agendado", prazo: "2026-07-16", responsavel: "Hadassa" },
-  { titulo: "Reels: história com Hermeto Pascoal", tipo: "Reels", status: "aprovacao", prazo: "2026-07-19", responsavel: "Marcelo" },
-  { titulo: "Foto + legenda: depoimento FECOMÉRCIO-AM", tipo: "Foto", status: "producao", prazo: "2026-07-21", responsavel: "Hadassa" },
-  { titulo: "Carrossel: bastidores do quarteto em estúdio", tipo: "Carrossel", status: "producao", prazo: "2026-07-24", responsavel: "Hadassa" },
-  { titulo: "Reels: 'Sem medo de improvisar' — teaser palestra", tipo: "Reels", status: "briefing", prazo: "2026-07-27", responsavel: "Marcelo" },
-  { titulo: "Post estático: convite podcast parceiro", tipo: "Foto", status: "briefing", prazo: "2026-07-28", responsavel: "Hadassa" },
+// ---- 1) DEMANDAS (dados iniciais / backup local) ---------------------
+// Isso serve de ponto de partida. Depois de configurado o armazenamento
+// na nuvem (CLOUD_URL abaixo), as edições feitas no site passam a mandar.
+// status possíveis: "afazer" | "fazendo" | "aguardando_feedback" | "pendente" | "alteracao" | "pronto_postar" | "concluido"
+let demandas = [
+  { id: "cu-wdp7ewv0pz", titulo: "[METADE] Times de jazz nunca tocam a mesma música igual duas vezes. Sua equipe já repete o mesmo discurso desde janeiro?", tipo: "Carrossel", status: "afazer", prazo: "2026-07-01", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0pz" },
+  { id: "cu-wdp7ewxxv3", titulo: "História Pessoal/Crônica", tipo: "Reels", status: "afazer", prazo: "2026-07-15", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewxxv3" },
+  { id: "cu-wdp7ewv0c0", titulo: "[LISTA] 3 ferramentas de IA que facilitam minha vida como empreendedor/dono de startup", tipo: "Carrossel", status: "afazer", prazo: "2026-07-17", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0c0" },
+  { id: "cu-wdp7ewv08f", titulo: "[Linha do tempo] Copa 2018 x Copa 2026", tipo: "Carrossel", status: "afazer", prazo: "2026-07-19", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv08f" },
+  { id: "cu-wdp7ewxxj6", titulo: "PALESTRA", tipo: "Card", status: "afazer", prazo: "2026-07-20", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewxxj6" },
+  { id: "cu-86agcqmr9", titulo: "Resposta ao Nigro sobre o poder da música no processo de desenvolvimento criativo", tipo: "LinkedIn", status: "afazer", prazo: "2026-07-22", responsavel: "A definir", link: "https://app.clickup.com/t/86agcqmr9" },
+  { id: "cu-86afqb7n7", titulo: "Resposta ao Nigro sobre o poder da música (versão Reels)", tipo: "Reels", status: "afazer", prazo: "2026-07-22", responsavel: "A definir", link: "https://app.clickup.com/t/86afqb7n7" },
+  { id: "cu-wdp7ewv0nx", titulo: "[LISTA] 3 coisas que a IA ainda não consegue fazer numa equipe", tipo: "Carrossel", status: "afazer", prazo: "2026-07-24", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0nx" },
 ];
+// Fonte: ClickUp (espaço "Marcelo") — demandas com prazo em julho/2026, importadas em 2026-07-14.
 
 // ---- 2) MÉTRICAS DO INSTAGRAM ---------------------------------------
 // Onde pegar: Instagram > menu ☰ > Dashboard profissional > Insights > Account
@@ -271,16 +316,24 @@ const metricas = {
 // ---- 3) PRÓXIMA ATUALIZAÇÃO -----------------------------------------
 const proximaAtualizacao = "2026-07-28";
 
+// ---- 4) ARMAZENAMENTO NA NUVEM (edição colaborativa de demandas) ----
+// Cole aqui a URL de um "bin" JSON gratuito (ex: jsonblob.com ou npoint.io).
+// Enquanto estiver em branco, o quadro funciona só localmente (edições no
+// site não são salvas entre visitas).
+const CLOUD_URL = "https://api.npoint.io/3c1fe30d9ff3aaeb1c46";
+
 /* ======================================================================
    Daqui pra baixo é só o motor da página — não precisa mexer.
    ====================================================================== */
 
 const STATUS = [
-  { key: "briefing",  label: "Em briefing",   color: "#7fa8c9" },
-  { key: "producao",  label: "Em produção",   color: "#d9a94a" },
-  { key: "aprovacao", label: "Em aprovação",  color: "#c1594f" },
-  { key: "agendado",  label: "Agendado",      color: "#9b7fc9" },
-  { key: "publicado", label: "Publicado",     color: "#6fae7a" },
+  { key: "afazer",              label: "A Fazer",              grupo: "Não iniciado", color: "#9aa0a6" },
+  { key: "fazendo",              label: "Fazendo",              grupo: "Ativo",        color: "#8b6fd6" },
+  { key: "aguardando_feedback",  label: "Aguardando Feedback",  grupo: "Feito",        color: "#e0793f" },
+  { key: "pendente",             label: "Pendente",             grupo: "Feito",        color: "#e0b23f" },
+  { key: "alteracao",            label: "Alteração",            grupo: "Feito",        color: "#d6524a" },
+  { key: "pronto_postar",        label: "Pronto para Postar",   grupo: "Feito",        color: "#3f8fd6" },
+  { key: "concluido",            label: "Concluído",            grupo: "Fechado",      color: "#4caf6f" },
 ];
 
 function fmtNum(n){ return n.toLocaleString('pt-BR'); }
@@ -353,7 +406,126 @@ function diasEntre(isoA, isoB){
   `).join('');
 })();
 
-// ---- kanban ----
+// ---- status da nuvem (indicador visual) ----
+function marcarStatusNuvem(estado){
+  const el = document.getElementById('cloud-status');
+  const nota = document.getElementById('howto-cloud-note');
+  if (!el) return;
+  if (estado === 'ok'){
+    el.textContent = '✓ Sincronizado com a nuvem';
+    el.className = 'hint ok';
+  } else if (estado === 'offline'){
+    el.textContent = '⚠ Sem armazenamento na nuvem configurado — edições não são salvas entre visitas';
+    el.className = 'hint warn';
+    if (nota) nota.textContent = 'CLOUD_URL ainda não foi configurado no arquivo — peça pra Hadassa (ou pra mim) ativar isso pra suas edições ficarem salvas de verdade.';
+  } else if (estado === 'erro'){
+    el.textContent = '⚠ Não consegui salvar agora — tente de novo em instantes';
+    el.className = 'hint warn';
+  }
+}
+
+// ---- carregar / salvar demandas na nuvem ----
+async function carregarDemandas(){
+  if (!CLOUD_URL){
+    marcarStatusNuvem('offline');
+    finalizarCarregamento();
+    return;
+  }
+  try{
+    const res = await fetch(CLOUD_URL, { cache: 'no-store' });
+    if (res.ok){
+      const data = await res.json();
+      if (Array.isArray(data) && data.length) demandas = data;
+      marcarStatusNuvem('ok');
+    } else {
+      marcarStatusNuvem('erro');
+    }
+  } catch(e){
+    marcarStatusNuvem('erro');
+  }
+  finalizarCarregamento();
+}
+
+async function salvarNaNuvem(){
+  if (!CLOUD_URL){ marcarStatusNuvem('offline'); return; }
+  try{
+    const res = await fetch(CLOUD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(demandas)
+    });
+    marcarStatusNuvem(res.ok ? 'ok' : 'erro');
+  } catch(e){
+    marcarStatusNuvem('erro');
+  }
+}
+
+function finalizarCarregamento(){
+  popularFiltros();
+  popularStatusForm();
+  renderKanban();
+}
+
+// ---- mudar status de uma demanda (chamado pelo <select> do card) ----
+function mudarStatus(select){
+  const id = select.dataset.id;
+  const novo = select.value;
+  const item = demandas.find(d => d.id === id);
+  if (item) item.status = novo;
+  renderKanban();
+  salvarNaNuvem();
+}
+
+// ---- formulário de nova demanda ----
+function toggleForm(){
+  document.getElementById('add-form').classList.toggle('open');
+}
+
+function popularStatusForm(){
+  const sel = document.getElementById('novoStatus');
+  sel.innerHTML = STATUS.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+}
+
+function adicionarDemanda(){
+  const titulo = document.getElementById('novoTitulo').value.trim();
+  const tipo = document.getElementById('novoTipo').value.trim() || 'Post';
+  const responsavel = document.getElementById('novoResp').value.trim() || 'Hadassa';
+  const prazo = document.getElementById('novoPrazo').value || new Date().toISOString().slice(0,10);
+  const status = document.getElementById('novoStatus').value || 'afazer';
+
+  if (!titulo){ alert('Escreve um título pra demanda antes de adicionar.'); return; }
+
+  demandas.push({ id: 'd' + Date.now(), titulo, tipo, status, prazo, responsavel });
+
+  document.getElementById('novoTitulo').value = '';
+  document.getElementById('novoTipo').value = '';
+  document.getElementById('novoResp').value = '';
+  document.getElementById('novoPrazo').value = '';
+  toggleForm();
+
+  popularFiltros();
+  renderKanban();
+  salvarNaNuvem();
+}
+
+// ---- filtros (tipo / responsável) ----
+function popularFiltros(){
+  const filtroTipo = document.getElementById('filtroTipo');
+  const filtroResp = document.getElementById('filtroResp');
+  const tipoAtual = filtroTipo.value;
+  const respAtual = filtroResp.value;
+
+  const tipos = [...new Set(demandas.map(d => d.tipo))].sort();
+  const resps = [...new Set(demandas.map(d => d.responsavel))].sort();
+
+  filtroTipo.innerHTML = '<option value="">Todos os tipos</option>' + tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+  filtroResp.innerHTML = '<option value="">Todos os responsáveis</option>' + resps.map(r => `<option value="${r}">${r}</option>`).join('');
+
+  filtroTipo.value = tipoAtual;
+  filtroResp.value = respAtual;
+}
+
+// ---- kanban agrupado ----
 function renderKanban(){
   const termo = document.getElementById('busca').value.trim().toLowerCase();
   const tipoSel = document.getElementById('filtroTipo').value;
@@ -367,52 +539,66 @@ function renderKanban(){
     return bate && bateTipo && bateResp;
   });
 
-  const kanbanEl = document.getElementById('kanban');
-  kanbanEl.innerHTML = STATUS.map(col => {
-    const itens = filtradas.filter(d => d.status === col.key);
-    const cards = itens.length ? itens.map(d => {
-      const dias = diasEntre(hoje, d.prazo);
-      let prazoClasse = '';
-      let prazoTexto = `Prazo: ${fmtData(d.prazo)}`;
-      if (col.key !== 'publicado') {
-        if (dias < 0){ prazoClasse = 'atrasado'; prazoTexto = `Atrasado há ${Math.abs(dias)}d`; }
-        else if (dias <= 3){ prazoClasse = 'proximo'; prazoTexto = `Vence em ${dias}d`; }
-      }
-      return `
-        <div class="card">
-          <div class="titulo">${d.titulo}</div>
-          <div class="meta">
-            <span class="tag">${d.tipo}</span>
-            <span class="tag resp">${d.responsavel}</span>
-          </div>
-          <div class="prazo ${prazoClasse}">${prazoTexto}</div>
-        </div>
-      `;
-    }).join('') : `<div class="empty-col">Nenhuma demanda</div>`;
+  const grupos = [];
+  STATUS.forEach(s => {
+    let g = grupos.find(g => g.nome === s.grupo);
+    if (!g){ g = { nome: s.grupo, colunas: [] }; grupos.push(g); }
+    g.colunas.push(s);
+  });
 
+  function cardHtml(d, col){
+    const dias = diasEntre(hoje, d.prazo);
+    let prazoClasse = '';
+    let prazoTexto = `Prazo: ${fmtData(d.prazo)}`;
+    if (col.key !== 'concluido'){
+      if (dias < 0){ prazoClasse = 'atrasado'; prazoTexto = `Atrasado há ${Math.abs(dias)}d`; }
+      else if (dias <= 3){ prazoClasse = 'proximo'; prazoTexto = `Vence em ${dias}d`; }
+    }
+    const tituloHtml = d.link
+      ? `<a href="${d.link}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${d.titulo} <span style="color:var(--text-dim);">↗</span></a>`
+      : d.titulo;
     return `
-      <div class="col">
-        <div class="col-head">
-          <span><span class="dot" style="background:${col.color}"></span><span class="name">${col.label}</span></span>
-          <span class="count">${itens.length}</span>
+      <div class="card">
+        <div class="titulo">${tituloHtml}</div>
+        <div class="meta">
+          <span class="tag">${d.tipo}</span>
+          <span class="tag resp">${d.responsavel}</span>
         </div>
-        ${cards}
+        <div class="prazo ${prazoClasse}">${prazoTexto}</div>
+        <select class="status-select" data-id="${d.id}" onchange="mudarStatus(this)">
+          ${STATUS.map(s => `<option value="${s.key}" ${s.key===d.status?'selected':''}>${s.label}</option>`).join('')}
+        </select>
       </div>
     `;
-  }).join('');
-}
+  }
 
-(function popularFiltros(){
-  const tipos = [...new Set(demandas.map(d => d.tipo))].sort();
-  const resps = [...new Set(demandas.map(d => d.responsavel))].sort();
-  document.getElementById('filtroTipo').innerHTML += tipos.map(t => `<option value="${t}">${t}</option>`).join('');
-  document.getElementById('filtroResp').innerHTML += resps.map(r => `<option value="${r}">${r}</option>`).join('');
-})();
+  const kanbanEl = document.getElementById('kanban');
+  kanbanEl.innerHTML = grupos.map(g => `
+    <div class="grupo">
+      <div class="grupo-label">${g.nome}</div>
+      <div class="grupo-cols">
+        ${g.colunas.map(col => {
+          const itens = filtradas.filter(d => d.status === col.key);
+          const cards = itens.length ? itens.map(d => cardHtml(d, col)).join('') : `<div class="empty-col">Nenhuma demanda</div>`;
+          return `
+            <div class="col">
+              <div class="col-head">
+                <span><span class="dot" style="background:${col.color}"></span><span class="name">${col.label}</span></span>
+                <span class="count">${itens.length}</span>
+              </div>
+              ${cards}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
 
 document.getElementById('busca').addEventListener('input', renderKanban);
 document.getElementById('filtroTipo').addEventListener('change', renderKanban);
 document.getElementById('filtroResp').addEventListener('change', renderKanban);
-renderKanban();
+carregarDemandas();
 </script>
 
 </body>
