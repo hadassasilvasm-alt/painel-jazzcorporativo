@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jazz Corporativo — Painel de Conteúdo</title>
+<style>
+  :root{
+    --bg: #14110d;
+    --bg-soft: #1b1712;
+    --card: #211c16;
+    --card-border: #34291b;
+    --gold: #d9a94a;
+    --gold-soft: #f0d391;
+    --wine: #7a2e35;
+    --text: #f2ece0;
+    --text-dim: #b7aa93;
+    --green: #6fae7a;
+    --amber: #d9a94a;
+    --red: #c1594f;
+    --blue: #7fa8c9;
+    font-size: 16px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: radial-gradient(circle at 20% -10%, #2a2218 0%, var(--bg) 45%) fixed;
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    line-height: 1.5;
+    padding: 0 0 60px;
+  }
+  header{
+    padding: 42px 6vw 28px;
+    border-bottom: 1px solid var(--card-border);
+    display:flex; flex-wrap:wrap; gap:24px; justify-content:space-between; align-items:flex-end;
+  }
+  header h1{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 2rem;
+    margin: 0 0 6px;
+    color: var(--gold-soft);
+    letter-spacing: .3px;
+  }
+  header p{ margin:0; color: var(--text-dim); font-size:.95rem; }
+  .badges{ display:flex; gap:10px; flex-wrap:wrap; }
+  .badge{
+    background: var(--bg-soft);
+    border: 1px solid var(--card-border);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: .82rem;
+    color: var(--text-dim);
+    display:flex; align-items:center; gap:8px;
+  }
+  .badge strong{ color: var(--gold-soft); font-weight:600; }
+  .badge.warn{ border-color: var(--red); color: var(--red); }
+  .badge.warn strong{ color: var(--red); }
+
+  main{ padding: 34px 6vw 0; max-width:1400px; margin:0 auto; }
+  section{ margin-bottom: 46px; }
+  .section-head{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  h2{ font-family: Georgia, 'Times New Roman', serif; font-size:1.4rem; color: var(--gold-soft); margin:0; }
+  .hint{ color: var(--text-dim); font-size:.85rem; }
+
+  /* metrics */
+  .metrics-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:22px; }
+  .metric-panel{
+    background: linear-gradient(160deg, var(--card), var(--bg-soft));
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .metric-panel h3{ margin:0 0 4px; font-size:1.05rem; color: var(--text); }
+  .metric-panel .sub{ color: var(--text-dim); font-size:.78rem; margin-bottom:16px; }
+  .tile-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  .tile{ background: rgba(0,0,0,.18); border-radius:10px; padding:12px 14px; }
+  .tile .label{ font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; color: var(--text-dim); margin-bottom:4px; }
+  .tile .value{ font-size:1.35rem; font-weight:700; color: var(--gold-soft); }
+  .tile .delta{ font-size:.72rem; margin-top:3px; color: var(--text-dim); }
+  .tile .delta.up{ color: var(--green); }
+  .tile .delta.down{ color: var(--red); }
+
+  .hero-stat{
+    background: linear-gradient(120deg, var(--wine), #4a1c22);
+    border-radius: 14px;
+    padding: 24px 28px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+  }
+  .hero-stat .num{ font-family: Georgia, serif; font-size:2.4rem; color:#fff; font-weight:700; }
+  .hero-stat .label{ color:#f1d9d4; font-size:.85rem; }
+
+  /* kanban */
+  .filter-bar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .filter-bar input, .filter-bar select{
+    background: var(--bg-soft); border:1px solid var(--card-border); color:var(--text);
+    padding:9px 12px; border-radius:8px; font-size:.88rem; outline:none;
+  }
+  .filter-bar input::placeholder{ color: var(--text-dim); }
+  .kanban{ display:grid; grid-template-columns: repeat(5, minmax(220px,1fr)); gap:16px; overflow-x:auto; }
+  .col{ background: var(--bg-soft); border:1px solid var(--card-border); border-radius:12px; padding:14px; min-height:120px; }
+  .col-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .col-head .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:7px; }
+  .col-head .name{ font-size:.85rem; font-weight:600; color:var(--text); }
+  .col-head .count{ background: rgba(255,255,255,.08); border-radius:999px; padding:2px 9px; font-size:.75rem; color:var(--text-dim); }
+  .card{
+    background: var(--card); border:1px solid var(--card-border); border-radius:10px;
+    padding:12px; margin-bottom:10px; font-size:.85rem;
+  }
+  .card .titulo{ font-weight:600; margin-bottom:6px; color:var(--text); }
+  .card .meta{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .tag{ font-size:.68rem; padding:2px 8px; border-radius:999px; background: rgba(217,169,74,.15); color: var(--gold-soft); border:1px solid rgba(217,169,74,.3); }
+  .tag.resp{ background: rgba(127,168,201,.15); color: var(--blue); border-color: rgba(127,168,201,.3); }
+  .prazo{ font-size:.72rem; color: var(--text-dim); margin-top:6px; }
+  .prazo.atrasado{ color: var(--red); font-weight:600; }
+  .prazo.proximo{ color: var(--amber); font-weight:600; }
+  .empty-col{ color: var(--text-dim); font-size:.78rem; text-align:center; padding:20px 4px; }
+
+  /* how-to panel */
+  .howto-toggle{
+    background:none; border:1px solid var(--card-border); color:var(--gold-soft);
+    padding:8px 14px; border-radius:999px; cursor:pointer; font-size:.82rem;
+  }
+  .howto{
+    display:none; background: var(--bg-soft); border:1px solid var(--card-border); border-radius:12px;
+    padding:20px 24px; margin-top:16px; font-size:.88rem; color: var(--text-dim);
+  }
+  .howto.open{ display:block; }
+  .howto h4{ color:var(--gold-soft); margin-top:0; }
+  .howto code{ background: rgba(255,255,255,.08); padding:2px 6px; border-radius:5px; color:var(--gold-soft); }
+  .howto ol{ padding-left: 20px; }
+  .howto li{ margin-bottom:8px; }
+
+  footer{ text-align:center; color: var(--text-dim); font-size:.78rem; padding:30px 6vw 0; }
+
+  @media (max-width: 900px){
+    .kanban{ grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px){
+    .kanban{ grid-template-columns: 1fr; }
+    .tile-grid{ grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🎷 Jazz Corporativo — Painel de Conteúdo</h1>
+    <p>Acompanhamento de demandas e métricas · Instagram <strong style="color:var(--gold-soft)">@marcelocoelhomusic</strong></p>
+  </div>
+  <div class="badges" id="badges"></div>
+</header>
+
+<main>
+
+  <section>
+    <div class="section-head">
+      <h2>Resumo de métricas</h2>
+      <button class="howto-toggle" onclick="document.getElementById('howto-metricas').classList.toggle('open')">Como atualizar essas métricas?</button>
+    </div>
+
+    <div class="hero-stat" style="margin-bottom:22px;">
+      <div>
+        <div class="label">Seguidores totais (Instagram)</div>
+        <div class="num" id="seguidoresTotais">—</div>
+      </div>
+      <div class="label" id="seguidoresData">—</div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-panel">
+        <h3>Últimos 7 dias</h3>
+        <div class="sub">Comparado à média semanal do mês</div>
+        <div class="tile-grid" id="tiles-semana"></div>
+      </div>
+      <div class="metric-panel">
+        <h3>Últimos 30 dias</h3>
+        <div class="sub">Totais acumulados no mês</div>
+        <div class="tile-grid" id="tiles-mes"></div>
+      </div>
+    </div>
+
+    <div class="howto" id="howto-metricas">
+      <h4>Passo a passo — atualizar métricas (a cada 15 dias)</h4>
+      <ol>
+        <li>No Instagram, vá em <strong>Perfil → menu ☰ → Dashboard profissional → Insights → Account</strong>.</li>
+        <li>Troque o período para <strong>7 dias</strong> e anote: contas alcançadas, visualizações, interações, contas engajadas.</li>
+        <li>Troque o período para <strong>30 dias</strong> e anote os mesmos números, mais visitas ao perfil e cliques no link.</li>
+        <li>Abra este arquivo <code>.html</code> num editor de texto (Bloco de Notas, TextEdit ou VS Code).</li>
+        <li>Procure o bloco <code>const metricas = {'{'} ... {'}'}</code> perto do fim do arquivo e troque os números.</li>
+        <li>Salve o arquivo e reenvie pro cliente (ou suba onde ele acessa). Pronto.</li>
+      </ol>
+      <p>Dica: peça pra eu fazer isso — eu consigo abrir o Instagram, ler os números e editar o arquivo pra você.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Demandas em produção</h2>
+      <button class="howto-toggle" onclick="document.getElementById('howto-demandas').classList.toggle('open')">Como atualizar as demandas?</button>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="busca" placeholder="Buscar por título, tipo ou responsável...">
+      <select id="filtroTipo"><option value="">Todos os tipos</option></select>
+      <select id="filtroResp"><option value="">Todos os responsáveis</option></select>
+    </div>
+
+    <div class="kanban" id="kanban"></div>
+
+    <div class="howto" id="howto-demandas">
+      <h4>Passo a passo — atualizar demandas (a cada 15 dias)</h4>
+      <ol>
+        <li>Abra este arquivo <code>.html</code> num editor de texto.</li>
+        <li>Procure o bloco <code>const demandas = [ ... ]</code> perto do fim do arquivo.</li>
+        <li>Cada demanda é um bloco entre chaves <code>{'{'} {'}'}</code>. Copie um bloco existente pra criar uma demanda nova, ou edite o campo <code>status</code> de uma já existente.</li>
+        <li>Status possíveis: <code>briefing</code>, <code>producao</code>, <code>aprovacao</code>, <code>agendado</code>, <code>publicado</code>.</li>
+        <li>Salve o arquivo. As colunas do quadro se atualizam sozinhas com base nesses status.</li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Página estática atualizada quinzenalmente por Hadassa · Métricas via Instagram Insights (Dashboard profissional)
+</footer>
+
+<script>
+/* ======================================================================
+   🎷 ÁREA DE DADOS — é só isso aqui que precisa mudar a cada 15 dias
+   ====================================================================== */
+
+// ---- 1) DEMANDAS ----------------------------------------------------
+// status possíveis: "briefing" | "producao" | "aprovacao" | "agendado" | "publicado"
+// tipo: texto livre (ex: "Reels", "Carrossel", "Story", "Foto")
+// prazo: formato "AAAA-MM-DD"
+const demandas = [
+  { titulo: "Reels: bastidores da palestra na Elo Health", tipo: "Reels", status: "publicado", prazo: "2026-07-08", responsavel: "Hadassa" },
+  { titulo: "Carrossel: os 5 pilares do Jazz Corporativo", tipo: "Carrossel", status: "agendado", prazo: "2026-07-17", responsavel: "Hadassa" },
+  { titulo: "Story: enquete sobre próximos temas", tipo: "Story", status: "agendado", prazo: "2026-07-16", responsavel: "Hadassa" },
+  { titulo: "Reels: história com Hermeto Pascoal", tipo: "Reels", status: "aprovacao", prazo: "2026-07-19", responsavel: "Marcelo" },
+  { titulo: "Foto + legenda: depoimento FECOMÉRCIO-AM", tipo: "Foto", status: "producao", prazo: "2026-07-21", responsavel: "Hadassa" },
+  { titulo: "Carrossel: bastidores do quarteto em estúdio", tipo: "Carrossel", status: "producao", prazo: "2026-07-24", responsavel: "Hadassa" },
+  { titulo: "Reels: 'Sem medo de improvisar' — teaser palestra", tipo: "Reels", status: "briefing", prazo: "2026-07-27", responsavel: "Marcelo" },
+  { titulo: "Post estático: convite podcast parceiro", tipo: "Foto", status: "briefing", prazo: "2026-07-28", responsavel: "Hadassa" },
+];
+
+// ---- 2) MÉTRICAS DO INSTAGRAM ---------------------------------------
+// Onde pegar: Instagram > menu ☰ > Dashboard profissional > Insights > Account
+const metricas = {
+  atualizadoEm: "2026-07-14",
+  seguidoresTotais: 33216,
+  semana: {
+    alcance: 7977,
+    visualizacoes: 15757,
+    interacoes: 941,
+    contasEngajadas: 381
+  },
+  mes: {
+    alcance: 23953,
+    visualizacoes: 65828,
+    interacoes: 2391,
+    contasEngajadas: 1131,
+    visitasPerfil: 720,
+    cliquesLink: 30
+  }
+};
+
+// ---- 3) PRÓXIMA ATUALIZAÇÃO -----------------------------------------
+const proximaAtualizacao = "2026-07-28";
+
+/* ======================================================================
+   Daqui pra baixo é só o motor da página — não precisa mexer.
+   ====================================================================== */
+
+const STATUS = [
+  { key: "briefing",  label: "Em briefing",   color: "#7fa8c9" },
+  { key: "producao",  label: "Em produção",   color: "#d9a94a" },
+  { key: "aprovacao", label: "Em aprovação",  color: "#c1594f" },
+  { key: "agendado",  label: "Agendado",      color: "#9b7fc9" },
+  { key: "publicado", label: "Publicado",     color: "#6fae7a" },
+];
+
+function fmtNum(n){ return n.toLocaleString('pt-BR'); }
+function fmtData(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function diasEntre(isoA, isoB){
+  const a = new Date(isoA + 'T00:00:00');
+  const b = new Date(isoB + 'T00:00:00');
+  return Math.round((b - a) / 86400000);
+}
+
+// ---- badges do header ----
+(function renderBadges(){
+  const hoje = new Date().toISOString().slice(0,10);
+  const diasRestantes = diasEntre(hoje, proximaAtualizacao);
+  const el = document.getElementById('badges');
+  el.innerHTML = `
+    <span class="badge">Atualizado em <strong>${fmtData(metricas.atualizadoEm)}</strong></span>
+    <span class="badge ${diasRestantes < 0 ? 'warn' : ''}">
+      ${diasRestantes >= 0
+        ? `Próxima atualização em <strong>${diasRestantes} dia${diasRestantes===1?'':'s'}</strong>`
+        : `Atualização atrasada em <strong>${Math.abs(diasRestantes)} dia${Math.abs(diasRestantes)===1?'':'s'}</strong>`}
+    </span>
+  `;
+})();
+
+// ---- métricas ----
+(function renderMetricas(){
+  document.getElementById('seguidoresTotais').textContent = fmtNum(metricas.seguidoresTotais);
+  document.getElementById('seguidoresData').textContent = `atualizado em ${fmtData(metricas.atualizadoEm)}`;
+
+  const mediaSemanalDoMes = {
+    alcance: metricas.mes.alcance / 4,
+    visualizacoes: metricas.mes.visualizacoes / 4,
+    interacoes: metricas.mes.interacoes / 4,
+    contasEngajadas: metricas.mes.contasEngajadas / 4,
+  };
+
+  function deltaTag(atual, base){
+    const diffPct = base > 0 ? ((atual - base) / base) * 100 : 0;
+    const sinal = diffPct >= 0 ? '▲' : '▼';
+    const classe = diffPct >= 0 ? 'up' : 'down';
+    return `<div class="delta ${classe}">${sinal} ${Math.abs(diffPct).toFixed(0)}% vs média semanal do mês</div>`;
+  }
+
+  const semanaLabels = [
+    ['Contas alcançadas','alcance'], ['Visualizações','visualizacoes'],
+    ['Interações','interacoes'], ['Contas engajadas','contasEngajadas']
+  ];
+  document.getElementById('tiles-semana').innerHTML = semanaLabels.map(([label,key]) => `
+    <div class="tile">
+      <div class="label">${label}</div>
+      <div class="value">${fmtNum(metricas.semana[key])}</div>
+      ${deltaTag(metricas.semana[key], mediaSemanalDoMes[key])}
+    </div>
+  `).join('');
+
+  const mesLabels = [
+    ['Contas alcançadas','alcance'], ['Visualizações','visualizacoes'],
+    ['Interações','interacoes'], ['Contas engajadas','contasEngajadas'],
+    ['Visitas ao perfil','visitasPerfil'], ['Cliques no link externo','cliquesLink']
+  ];
+  document.getElementById('tiles-mes').innerHTML = mesLabels.map(([label,key]) => `
+    <div class="tile">
+      <div class="label">${label}</div>
+      <div class="value">${fmtNum(metricas.mes[key])}</div>
+    </div>
+  `).join('');
+})();
+
+// ---- kanban ----
+function renderKanban(){
+  const termo = document.getElementById('busca').value.trim().toLowerCase();
+  const tipoSel = document.getElementById('filtroTipo').value;
+  const respSel = document.getElementById('filtroResp').value;
+  const hoje = new Date().toISOString().slice(0,10);
+
+  const filtradas = demandas.filter(d => {
+    const bate = (d.titulo + d.tipo + d.responsavel).toLowerCase().includes(termo);
+    const bateTipo = !tipoSel || d.tipo === tipoSel;
+    const bateResp = !respSel || d.responsavel === respSel;
+    return bate && bateTipo && bateResp;
+  });
+
+  const kanbanEl = document.getElementById('kanban');
+  kanbanEl.innerHTML = STATUS.map(col => {
+    const itens = filtradas.filter(d => d.status === col.key);
+    const cards = itens.length ? itens.map(d => {
+      const dias = diasEntre(hoje, d.prazo);
+      let prazoClasse = '';
+      let prazoTexto = `Prazo: ${fmtData(d.prazo)}`;
+      if (col.key !== 'publicado') {
+        if (dias < 0){ prazoClasse = 'atrasado'; prazoTexto = `Atrasado há ${Math.abs(dias)}d`; }
+        else if (dias <= 3){ prazoClasse = 'proximo'; prazoTexto = `Vence em ${dias}d`; }
+      }
+      return `
+        <div class="card">
+          <div class="titulo">${d.titulo}</div>
+          <div class="meta">
+            <span class="tag">${d.tipo}</span>
+            <span class="tag resp">${d.responsavel}</span>
+          </div>
+          <div class="prazo ${prazoClasse}">${prazoTexto}</div>
+        </div>
+      `;
+    }).join('') : `<div class="empty-col">Nenhuma demanda</div>`;
+
+    return `
+      <div class="col">
+        <div class="col-head">
+          <span><span class="dot" style="background:${col.color}"></span><span class="name">${col.label}</span></span>
+          <span class="count">${itens.length}</span>
+        </div>
+        ${cards}
+      </div>
+    `;
+  }).join('');
+}
+
+(function popularFiltros(){
+  const tipos = [...new Set(demandas.map(d => d.tipo))].sort();
+  const resps = [...new Set(demandas.map(d => d.responsavel))].sort();
+  document.getElementById('filtroTipo').innerHTML += tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+  document.getElementById('filtroResp').innerHTML += resps.map(r => `<option value="${r}">${r}</option>`).join('');
+})();
+
+document.getElementById('busca').addEventListener('input', renderKanban);
+document.getElementById('filtroTipo').addEventListener('change', renderKanban);
+document.getElementById('filtroResp').addEventListener('change', renderKanban);
+renderKanban();
+</script>
+
+</body>
+</html>
