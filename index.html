@@ -175,22 +175,43 @@
   }
   .cal-nav button:hover{ border-color: var(--accent); color: var(--accent-soft); }
   .cal-mes-label{ font-family:'Poppins',sans-serif; font-weight:700; font-size:1.05rem; color:var(--text); text-transform:capitalize; min-width:160px; }
-  .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+  .cal-grid{ display:grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap:6px; }
   .cal-dow{ text-align:center; font-size:.66rem; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); padding-bottom:6px; font-weight:700; }
   .cal-day{
     background: var(--card); border:1px solid var(--card-border); border-radius:12px;
-    min-height:92px; padding:6px; font-size:.72rem;
+    height:100px; padding:6px; font-size:.72rem; min-width:0;
+    display:flex; flex-direction:column; overflow:hidden;
   }
   .cal-day.fora{ opacity:.32; }
   .cal-day.hoje{ border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-  .cal-day .num{ color:var(--text-dim); font-weight:700; margin-bottom:4px; font-size:.72rem; }
+  .cal-day .num{ color:var(--text-dim); font-weight:700; margin-bottom:4px; font-size:.72rem; flex-shrink:0; }
+  .cal-day-items{ overflow-y:auto; flex:1; min-height:0; }
   .cal-item{
     background: var(--bg-soft); border-left:3px solid var(--text-dim); border-radius:5px;
     padding:2px 5px; margin-bottom:3px; font-size:.64rem; color:var(--text);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:default;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; min-width:0;
   }
+  .cal-item:hover{ background: rgba(246,75,15,.18); }
+  .cal-modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:60;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .cal-modal-overlay.open{ display:flex; }
+  .cal-modal{
+    background: var(--card); border:1px solid var(--card-border); border-radius:18px;
+    padding:26px; max-width:420px; width:100%; position:relative;
+  }
+  .cal-modal-close{
+    position:absolute; top:14px; right:14px; background:none; border:none; color:var(--text-dim);
+    font-size:1.4rem; cursor:pointer; line-height:1; padding:4px;
+  }
+  .cal-modal-close:hover{ color:var(--text); }
+  .cal-modal h4{ font-family:'Poppins',sans-serif; margin:0 0 16px; padding-right:26px; color:var(--text); font-size:1.05rem; }
+  .cal-modal-row{ font-size:.85rem; color:var(--text-dim); margin-bottom:10px; }
+  .cal-modal-row strong{ color:var(--text); }
+  .cal-modal-link{ color:var(--accent-soft); text-decoration:none; font-weight:600; }
   @media (max-width: 700px){
-    .cal-day{ min-height:56px; font-size:.62rem; }
+    .cal-day{ height:64px; font-size:.62rem; }
     .cal-item{ font-size:.58rem; }
   }
 
@@ -316,6 +337,13 @@
         <button onclick="mudarMes(1)">›</button>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <div class="cal-modal-overlay" id="cal-modal-overlay" onclick="fecharModalCalendario(event)">
+      <div class="cal-modal">
+        <button class="cal-modal-close" onclick="fecharModalCalendario()">×</button>
+        <div id="cal-modal-content"></div>
+      </div>
     </div>
 
     <div class="howto" id="howto-demandas">
@@ -708,9 +736,9 @@ function renderCalendario(){
     const isHoje = dataStr === hojeStr;
     const itensHtml = itens.map(d => {
       const statusInfo = STATUS.find(s => s.key === d.status) || {};
-      return `<div class="cal-item" style="border-left-color:${statusInfo.color || '#888'}" title="${d.titulo} (${statusInfo.label || d.status})">${d.titulo}</div>`;
+      return `<div class="cal-item" style="border-left-color:${statusInfo.color || '#888'}" onclick="abrirModalCalendario('${d.id}')" title="${d.titulo}">${d.titulo}</div>`;
     }).join('');
-    html += `<div class="cal-day ${isHoje ? 'hoje' : ''}"><div class="num">${dia}</div>${itensHtml}</div>`;
+    html += `<div class="cal-day ${isHoje ? 'hoje' : ''}"><div class="num">${dia}</div><div class="cal-day-items">${itensHtml}</div></div>`;
   }
 
   const totalCells = offset + diasNoMes;
@@ -720,6 +748,34 @@ function renderCalendario(){
   }
 
   grid.innerHTML = html;
+}
+
+// ---- modal de detalhes (clique num item do calendário) ----
+function abrirModalCalendario(id){
+  const d = demandas.find(x => x.id === id);
+  if (!d) return;
+  const statusInfo = STATUS.find(s => s.key === d.status) || {};
+  const dias = diasEntre(new Date().toISOString().slice(0,10), d.prazo);
+  let prazoTexto = fmtData(d.prazo);
+  if (d.status !== 'concluido'){
+    if (dias < 0) prazoTexto += ` (atrasado há ${Math.abs(dias)}d)`;
+    else if (dias <= 3) prazoTexto += ` (vence em ${dias}d)`;
+  }
+  const linkHtml = d.link ? `<div class="cal-modal-row"><a href="${d.link}" target="_blank" rel="noopener" class="cal-modal-link">Abrir no ClickUp ↗</a></div>` : '';
+  document.getElementById('cal-modal-content').innerHTML = `
+    <h4>${d.titulo}</h4>
+    <div class="cal-modal-row"><strong>Status:</strong> ${statusInfo.label || d.status}</div>
+    <div class="cal-modal-row"><strong>Tipo:</strong> ${d.tipo}</div>
+    <div class="cal-modal-row"><strong>Responsável:</strong> ${d.responsavel}</div>
+    <div class="cal-modal-row"><strong>Prazo:</strong> ${prazoTexto}</div>
+    ${linkHtml}
+  `;
+  document.getElementById('cal-modal-overlay').classList.add('open');
+}
+
+function fecharModalCalendario(e){
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('cal-modal-overlay').classList.remove('open');
 }
 
 document.getElementById('busca').addEventListener('input', renderKanban);
