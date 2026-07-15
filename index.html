@@ -92,6 +92,31 @@
   .tile .delta.up{ color: var(--green); }
   .tile .delta.down{ color: var(--red); }
 
+  /* análise de desempenho */
+  .analise-perguntas{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .analise-pergunta{
+    background: var(--bg-soft); border:1px solid var(--card-border); color:var(--text);
+    padding:10px 16px; border-radius:12px; font-size:.83rem; cursor:pointer; font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .analise-pergunta:hover{ border-color: var(--accent); }
+  .analise-pergunta.active{ background: var(--accent); border-color: var(--accent); color:#fff; }
+  .analise-resposta{
+    background: var(--card); border:1px solid var(--card-border); border-radius:18px;
+    padding:24px 28px; font-size:.9rem; color: var(--text-dim); line-height:1.7;
+  }
+  .analise-resposta h4{ color:var(--text); font-family:'Poppins',sans-serif; margin:0 0 14px; font-size:1.05rem; }
+  .analise-resposta p{ margin:0 0 14px; }
+  .analise-resposta p:last-child{ margin-bottom:0; }
+  .analise-resposta strong{ color: var(--text); }
+  .analise-resposta table{ width:100%; border-collapse:collapse; margin:6px 0 18px; font-size:.85rem; }
+  .analise-resposta th{ text-align:left; color:var(--text-dim); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--card-border); font-size:.75rem; text-transform:uppercase; letter-spacing:.4px; }
+  .analise-resposta td{ padding:9px 10px; border-bottom:1px solid var(--card-border); color:var(--text); }
+  .analise-resposta .delta-down{ color: var(--red); font-weight:700; }
+  .analise-resposta .delta-up{ color: var(--green); font-weight:700; }
+  .destaque-post{ background: var(--bg-soft); border:1px solid var(--card-border); border-radius:14px; padding:16px 18px; margin:0 0 14px; }
+  .destaque-post:last-of-type{ margin-bottom:14px; }
+
   /* resumo do que vem agora */
   .resumo-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:18px; }
   .resumo-card{ background: var(--card); border:1px solid var(--card-border); border-radius:18px; padding:18px 20px; }
@@ -339,6 +364,20 @@
 
   <section>
     <div class="section-head">
+      <h2>Análise de desempenho</h2>
+      <span class="hint" id="analise-data">—</span>
+    </div>
+    <div class="analise-perguntas" id="analise-perguntas">
+      <button class="analise-pergunta" data-q="mes" onclick="mostrarAnalise('mes')">📊 Desempenho do mês</button>
+      <button class="analise-pergunta" data-q="semana" onclick="mostrarAnalise('semana')">📅 Comparativo semanal</button>
+      <button class="analise-pergunta" data-q="formatos" onclick="mostrarAnalise('formatos')">🎬 Formatos que performam melhor</button>
+      <button class="analise-pergunta" data-q="destaques" onclick="mostrarAnalise('destaques')">🏆 Destaques do período</button>
+    </div>
+    <div class="analise-resposta" id="analise-resposta"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
       <h2>O que vem agora</h2>
       <span class="hint">Todos os canais, atualizado em tempo real</span>
     </div>
@@ -475,6 +514,45 @@ const metricas = {
   }
 };
 
+// ---- 2b) ANÁLISE DE DESEMPENHO (respostas escritas, atualizadas junto com as métricas) ----
+const ANALISE = {
+  atualizadoEm: "2026-07-15",
+  mes: `
+    <h4>Desempenho do mês (últimos 30 dias)</h4>
+    <p>O perfil somou <strong>61.787 visualizações</strong> e alcançou <strong>24.264 contas</strong> nos últimos 30 dias. A maior parte desse alcance veio de fora da base de seguidores (64,6% não seguidores contra 35,4% seguidores) — sinal de que o conteúdo está circulando bem fora da bolha de quem já acompanha o perfil, provavelmente puxado pelos Reels.</p>
+    <p>Do lado do engajamento: <strong>2.242 interações</strong> em <strong>1.058 contas engajadas</strong>, uma taxa de engajamento geral de <strong>3,6%</strong> sobre as visualizações — um número saudável pra conteúdo educativo/institucional (a média do mercado costuma girar entre 1% e 3%).</p>
+    <p>O perfil recebeu <strong>714 visitas</strong> e <strong>35 cliques no link da bio</strong> no período — ou seja, o conteúdo não está só entretendo, está gerando intenção real de conhecer mais o trabalho do Marcelo.</p>
+    <p>Total de seguidores ao fim do período: <strong>33.209</strong>.</p>
+  `,
+  semana: `
+    <h4>Comparativo: últimos 7 dias vs. 7 dias anteriores</h4>
+    <p>Comparando a semana mais recente com a semana anterior (calculado a partir dos dados de 14 dias do Instagram):</p>
+    <table>
+      <tr><th>Métrica</th><th>Esta semana</th><th>Semana passada</th><th>Variação</th></tr>
+      <tr><td>Visualizações</td><td>11.535</td><td>19.369</td><td class="delta-down">▼ 40%</td></tr>
+      <tr><td>Contas alcançadas</td><td>5.815</td><td>8.758</td><td class="delta-down">▼ 34%</td></tr>
+      <tr><td>Interações</td><td>575</td><td>742</td><td class="delta-down">▼ 23%</td></tr>
+      <tr><td>Contas engajadas</td><td>141</td><td>475</td><td class="delta-down">▼ 70%</td></tr>
+      <tr><td>Visitas ao perfil</td><td>173</td><td>201</td><td class="delta-down">▼ 14%</td></tr>
+    </table>
+    <p>Queda generalizada essa semana, mas repare que <strong>contas engajadas caiu bem mais (-70%) do que visualizações (-40%)</strong> — o problema não é só menos gente vendo, é menos gente se interessando pelo que viu.</p>
+    <p>Motivo provável: a semana anterior (29/jun a 5/jul) ainda estava sendo impulsionada pelo Reel de maior alcance do mês, publicado em 26/jun ("Liderança e trabalho em equipe!"). Essa semana não teve um Reel com força parecida — o destaque foi um Story em 10/jul, formato que historicamente performa bem em views mas gera menos interação.</p>
+  `,
+  formatos: `
+    <h4>Quais formatos performam melhor</h4>
+    <p>Nos últimos 30 dias, por <strong>visualizações</strong>: Reels concentram 60,3%, Stories 39,1% e Posts de feed só 0,7%.</p>
+    <p>Por <strong>interações</strong>, a diferença fica ainda mais clara a favor dos Reels: 67,9% contra 31,7% dos Stories e 0,5% dos Posts.</p>
+    <p>Traduzindo em taxa de engajamento por formato (interações ÷ visualizações): Reels <strong>~4,1%</strong>, Stories <strong>~2,9%</strong>, Posts de feed <strong>~2,6%</strong>.</p>
+    <p><strong>Reels são hoje o formato mais eficiente</strong> — trazem mais alcance E fazem quem vê interagir proporcionalmente mais. Stories são bons pra manter frequência e bastidores, mas convertem menos em interação. Posts estáticos no feed praticamente não têm peso nos números atuais — vale repensar se ainda fazem sentido no ritmo de produção.</p>
+  `,
+  destaques: `
+    <h4>Destaques do período</h4>
+    <div class="destaque-post">🏆 <strong>Melhor conteúdo do mês:</strong> Reel "Liderança e trabalho em equipe!" (26/jun) — 3,1 mil visualizações e 211 interações, taxa de ~6,8% (quase o dobro da média da conta). Uma cena de orquestra puxando o tema de liderança — exatamente a fórmula do Jazz Corporativo: jazz como protagonista, sem citar empresa nenhuma.</div>
+    <div class="destaque-post">🥈 <strong>Segundo destaque:</strong> vídeo "Criatividade e astúcia é o novo modelo de inteligência humana?" (22/jun) — 1 mil visualizações e 61 interações, taxa de ~6,1%.</div>
+    <p>Vale notar: alguns compartilhamentos de notícias externas (uma sobre a Copa do Mundo em 5/jul, uma crônica em 10/jul, uma matéria da Folha em 18/jun) também tiveram boa visualização, mas proporcionalmente bem menos interação — não são conteúdo autoral e não reforçam o posicionamento da marca. Os dois destaques de verdade são os que têm a voz e os temas do próprio Marcelo.</p>
+  `
+};
+
 // ---- 3) PRÓXIMA ATUALIZAÇÃO -----------------------------------------
 const proximaAtualizacao = "2026-07-28";
 
@@ -576,6 +654,17 @@ function diasEntre(isoA, isoB){
       <div class="value">${fmtNum(metricas.mes[key])}</div>
     </div>
   `).join('');
+})();
+
+// ---- análise de desempenho (perguntas clicáveis) ----
+function mostrarAnalise(chave){
+  document.querySelectorAll('.analise-pergunta').forEach(b => b.classList.toggle('active', b.dataset.q === chave));
+  document.getElementById('analise-resposta').innerHTML = ANALISE[chave];
+}
+(function initAnalise(){
+  const el = document.getElementById('analise-data');
+  if (el) el.textContent = 'Dados de ' + fmtData(ANALISE.atualizadoEm);
+  mostrarAnalise('mes');
 })();
 
 // ---- status da nuvem (indicador visual) ----
