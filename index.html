@@ -356,7 +356,10 @@
       </select>
       <input id="novoTipo" placeholder="Tipo (Reels, Carrossel, Story...)">
       <input id="novoResp" placeholder="Responsável">
+      <span class="hint">Prazo produção</span>
       <input id="novoPrazo" type="date">
+      <span class="hint">Publica em</span>
+      <input id="novoDataPublicacao" type="date">
       <select id="novoStatus"></select>
       <button class="btn-save" onclick="adicionarDemanda()">Adicionar</button>
       <button class="btn-cancel" onclick="toggleForm()">Cancelar</button>
@@ -615,16 +618,17 @@ function renderResumo(){
   if (!el) return;
   const hoje = new Date().toISOString().slice(0,10);
   const ativas = demandas.filter(d => d.status !== 'concluido');
+  const dataRef = d => d.dataPublicacao || d.prazo;
 
-  const hojeList = ativas.filter(d => d.prazo === hoje);
-  const semanaList = ativas.filter(d => { const dias = diasEntre(hoje, d.prazo); return dias > 0 && dias <= 7; });
-  const atrasadoList = ativas.filter(d => diasEntre(hoje, d.prazo) < 0)
-    .sort((a,b) => a.prazo.localeCompare(b.prazo));
-  semanaList.sort((a,b) => a.prazo.localeCompare(b.prazo));
+  const hojeList = ativas.filter(d => dataRef(d) === hoje);
+  const semanaList = ativas.filter(d => { const dias = diasEntre(hoje, dataRef(d)); return dias > 0 && dias <= 7; });
+  const atrasadoList = ativas.filter(d => diasEntre(hoje, dataRef(d)) < 0)
+    .sort((a,b) => dataRef(a).localeCompare(dataRef(b)));
+  semanaList.sort((a,b) => dataRef(a).localeCompare(dataRef(b)));
 
   function itemHtml(d, mostrarData){
     const cInfo = canalInfo(d.canal);
-    const dataTxt = mostrarData ? fmtData(d.prazo) : '';
+    const dataTxt = mostrarData ? fmtData(dataRef(d)) : '';
     return `<div class="resumo-item" onclick="abrirModalCalendario('${d.id}')">
       <span class="resumo-item-titulo">${cInfo.icone} ${d.titulo}</span>
       <span class="resumo-item-data">${dataTxt}</span>
@@ -676,16 +680,18 @@ function adicionarDemanda(){
   const tipo = document.getElementById('novoTipo').value.trim() || 'Post';
   const responsavel = document.getElementById('novoResp').value.trim() || 'Hadassa';
   const prazo = document.getElementById('novoPrazo').value || new Date().toISOString().slice(0,10);
+  const dataPublicacao = document.getElementById('novoDataPublicacao').value || '';
   const status = document.getElementById('novoStatus').value || 'afazer';
 
   if (!titulo){ alert('Escreve um título pra demanda antes de adicionar.'); return; }
 
-  demandas.push({ id: 'd' + Date.now(), titulo, tipo, canal, status, prazo, responsavel });
+  demandas.push({ id: 'd' + Date.now(), titulo, tipo, canal, status, prazo, dataPublicacao, responsavel });
 
   document.getElementById('novoTitulo').value = '';
   document.getElementById('novoTipo').value = '';
   document.getElementById('novoResp').value = '';
   document.getElementById('novoPrazo').value = '';
+  document.getElementById('novoDataPublicacao').value = '';
   toggleForm();
 
   popularFiltros();
@@ -762,6 +768,7 @@ function renderKanban(){
           <span class="tag resp">${d.responsavel}</span>
         </div>
         <div class="prazo ${prazoClasse}">${prazoTexto}</div>
+        ${d.dataPublicacao ? `<div class="prazo">📅 Publica em ${fmtData(d.dataPublicacao)}</div>` : ''}
         <select class="status-select" data-id="${d.id}" onchange="mudarStatus(this)">
           ${STATUS.map(s => `<option value="${s.key}" ${s.key===d.status?'selected':''}>${s.label}</option>`).join('')}
         </select>
@@ -825,11 +832,11 @@ function renderCalendario(){
 
   for (let dia = 1; dia <= diasNoMes; dia++){
     const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-    const itens = demandas.filter(d => d.prazo === dataStr);
+    const itens = demandas.filter(d => (d.dataPublicacao || d.prazo) === dataStr);
     const isHoje = dataStr === hojeStr;
     const itensHtml = itens.map(d => {
-      const statusInfo = STATUS.find(s => s.key === d.status) || {};
-      return `<div class="cal-item" style="border-left-color:${statusInfo.color || '#888'}" onclick="abrirModalCalendario('${d.id}')" title="${d.titulo}">${d.titulo}</div>`;
+      const cInfo = canalInfo(d.canal);
+      return `<div class="cal-item" style="border-left-color:${cInfo.color}" onclick="abrirModalCalendario('${d.id}')" title="${d.titulo}">${cInfo.icone} ${d.titulo}</div>`;
     }).join('');
     html += `<div class="cal-day ${isHoje ? 'hoje' : ''}"><div class="num">${dia}</div><div class="cal-day-items">${itensHtml}</div></div>`;
   }
@@ -856,13 +863,15 @@ function abrirModalCalendario(id){
   }
   const linkHtml = d.link ? `<div class="cal-modal-row"><a href="${d.link}" target="_blank" rel="noopener" class="cal-modal-link">Abrir no ClickUp ↗</a></div>` : '';
   const cInfo = canalInfo(d.canal);
+  const publicacaoTexto = d.dataPublicacao ? fmtData(d.dataPublicacao) : 'Ainda não definida';
   document.getElementById('cal-modal-content').innerHTML = `
     <h4>${d.titulo}</h4>
     <div class="cal-modal-row"><strong>Canal:</strong> ${cInfo.icone} ${cInfo.label}</div>
     <div class="cal-modal-row"><strong>Status:</strong> ${statusInfo.label || d.status}</div>
     <div class="cal-modal-row"><strong>Tipo:</strong> ${d.tipo}</div>
     <div class="cal-modal-row"><strong>Responsável:</strong> ${d.responsavel}</div>
-    <div class="cal-modal-row"><strong>Prazo:</strong> ${prazoTexto}</div>
+    <div class="cal-modal-row"><strong>Prazo de produção:</strong> ${prazoTexto}</div>
+    <div class="cal-modal-row"><strong>Data de publicação:</strong> ${publicacaoTexto}</div>
     ${linkHtml}
   `;
   document.getElementById('cal-modal-overlay').classList.add('open');
