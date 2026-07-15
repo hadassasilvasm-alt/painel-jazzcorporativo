@@ -311,6 +311,13 @@
 
     <div class="filter-bar">
       <input type="text" id="busca" placeholder="Buscar por título, tipo ou responsável...">
+      <select id="filtroCanal">
+        <option value="">Todos os canais</option>
+        <option value="instagram">📷 Instagram</option>
+        <option value="blog">📝 Blog</option>
+        <option value="email">✉️ Email</option>
+        <option value="linkedin">💼 LinkedIn</option>
+      </select>
       <select id="filtroTipo"><option value="">Todos os tipos</option></select>
       <select id="filtroResp"><option value="">Todos os responsáveis</option></select>
       <button class="add-btn" onclick="toggleForm()">+ Nova demanda</button>
@@ -318,6 +325,12 @@
 
     <div class="add-form" id="add-form">
       <input id="novoTitulo" placeholder="Título da demanda" style="flex:1 1 240px;">
+      <select id="novoCanal">
+        <option value="instagram">📷 Instagram</option>
+        <option value="blog">📝 Blog</option>
+        <option value="email">✉️ Email</option>
+        <option value="linkedin">💼 LinkedIn</option>
+      </select>
       <input id="novoTipo" placeholder="Tipo (Reels, Carrossel, Story...)">
       <input id="novoResp" placeholder="Responsável">
       <input id="novoPrazo" type="date">
@@ -372,14 +385,14 @@
 // na nuvem (CLOUD_URL abaixo), as edições feitas no site passam a mandar.
 // status possíveis: "afazer" | "fazendo" | "aguardando_feedback" | "pendente" | "alteracao" | "pronto_postar" | "concluido"
 let demandas = [
-  { id: "cu-wdp7ewv0pz", titulo: "[METADE] Times de jazz nunca tocam a mesma música igual duas vezes. Sua equipe já repete o mesmo discurso desde janeiro?", tipo: "Carrossel", status: "afazer", prazo: "2026-07-01", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0pz" },
-  { id: "cu-wdp7ewxxv3", titulo: "História Pessoal/Crônica", tipo: "Reels", status: "afazer", prazo: "2026-07-15", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewxxv3" },
-  { id: "cu-wdp7ewv0c0", titulo: "[LISTA] 3 ferramentas de IA que facilitam minha vida como empreendedor/dono de startup", tipo: "Carrossel", status: "afazer", prazo: "2026-07-17", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0c0" },
-  { id: "cu-wdp7ewv08f", titulo: "[Linha do tempo] Copa 2018 x Copa 2026", tipo: "Carrossel", status: "afazer", prazo: "2026-07-19", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv08f" },
-  { id: "cu-wdp7ewxxj6", titulo: "PALESTRA", tipo: "Card", status: "afazer", prazo: "2026-07-20", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewxxj6" },
-  { id: "cu-86agcqmr9", titulo: "Resposta ao Nigro sobre o poder da música no processo de desenvolvimento criativo", tipo: "LinkedIn", status: "afazer", prazo: "2026-07-22", responsavel: "A definir", link: "https://app.clickup.com/t/86agcqmr9" },
-  { id: "cu-86afqb7n7", titulo: "Resposta ao Nigro sobre o poder da música (versão Reels)", tipo: "Reels", status: "afazer", prazo: "2026-07-22", responsavel: "A definir", link: "https://app.clickup.com/t/86afqb7n7" },
-  { id: "cu-wdp7ewv0nx", titulo: "[LISTA] 3 coisas que a IA ainda não consegue fazer numa equipe", tipo: "Carrossel", status: "afazer", prazo: "2026-07-24", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0nx" },
+  { id: "cu-wdp7ewv0pz", titulo: "[METADE] Times de jazz nunca tocam a mesma música igual duas vezes. Sua equipe já repete o mesmo discurso desde janeiro?", tipo: "Carrossel", canal: "instagram", status: "afazer", prazo: "2026-07-01", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0pz" },
+  { id: "cu-wdp7ewxxv3", titulo: "História Pessoal/Crônica", tipo: "Reels", canal: "instagram", status: "afazer", prazo: "2026-07-15", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewxxv3" },
+  { id: "cu-wdp7ewv0c0", titulo: "[LISTA] 3 ferramentas de IA que facilitam minha vida como empreendedor/dono de startup", tipo: "Carrossel", canal: "instagram", status: "afazer", prazo: "2026-07-17", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0c0" },
+  { id: "cu-wdp7ewv08f", titulo: "[Linha do tempo] Copa 2018 x Copa 2026", tipo: "Carrossel", canal: "instagram", status: "afazer", prazo: "2026-07-19", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv08f" },
+  { id: "cu-wdp7ewxxj6", titulo: "PALESTRA", tipo: "Card", canal: "instagram", status: "afazer", prazo: "2026-07-20", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewxxj6" },
+  { id: "cu-86agcqmr9", titulo: "Resposta ao Nigro sobre o poder da música no processo de desenvolvimento criativo", tipo: "Artigo", canal: "linkedin", status: "afazer", prazo: "2026-07-22", responsavel: "A definir", link: "https://app.clickup.com/t/86agcqmr9" },
+  { id: "cu-86afqb7n7", titulo: "Resposta ao Nigro sobre o poder da música (versão Reels)", tipo: "Reels", canal: "instagram", status: "afazer", prazo: "2026-07-22", responsavel: "A definir", link: "https://app.clickup.com/t/86afqb7n7" },
+  { id: "cu-wdp7ewv0nx", titulo: "[LISTA] 3 coisas que a IA ainda não consegue fazer numa equipe", tipo: "Carrossel", canal: "instagram", status: "afazer", prazo: "2026-07-24", responsavel: "A definir", link: "https://app.clickup.com/t/wdp7ewv0nx" },
 ];
 // Fonte: ClickUp (espaço "Marcelo") — demandas com prazo em julho/2026, importadas em 2026-07-14.
 
@@ -426,6 +439,16 @@ const STATUS = [
   { key: "pronto_postar",        label: "Pronto para Postar",   grupo: "Feito",        color: "#3f8fd6" },
   { key: "concluido",            label: "Concluído",            grupo: "Fechado",      color: "#4caf6f" },
 ];
+
+const CANAIS = [
+  { key: "instagram", label: "Instagram", color: "#e1306c", icone: "📷" },
+  { key: "blog",       label: "Blog",       color: "#3fa9dc", icone: "📝" },
+  { key: "email",      label: "Email",      color: "#f2b632", icone: "✉️" },
+  { key: "linkedin",   label: "LinkedIn",   color: "#0a66c2", icone: "💼" },
+];
+function canalInfo(key){
+  return CANAIS.find(c => c.key === key) || { label: key || "—", color: "#9aa0a6", icone: "🔹" };
+}
 
 function fmtNum(n){ return n.toLocaleString('pt-BR'); }
 function fmtData(iso){
@@ -584,6 +607,7 @@ function popularStatusForm(){
 
 function adicionarDemanda(){
   const titulo = document.getElementById('novoTitulo').value.trim();
+  const canal = document.getElementById('novoCanal').value || 'instagram';
   const tipo = document.getElementById('novoTipo').value.trim() || 'Post';
   const responsavel = document.getElementById('novoResp').value.trim() || 'Hadassa';
   const prazo = document.getElementById('novoPrazo').value || new Date().toISOString().slice(0,10);
@@ -591,7 +615,7 @@ function adicionarDemanda(){
 
   if (!titulo){ alert('Escreve um título pra demanda antes de adicionar.'); return; }
 
-  demandas.push({ id: 'd' + Date.now(), titulo, tipo, status, prazo, responsavel });
+  demandas.push({ id: 'd' + Date.now(), titulo, tipo, canal, status, prazo, responsavel });
 
   document.getElementById('novoTitulo').value = '';
   document.getElementById('novoTipo').value = '';
@@ -632,15 +656,17 @@ function mudarView(view){
 // ---- kanban agrupado ----
 function renderKanban(){
   const termo = document.getElementById('busca').value.trim().toLowerCase();
+  const canalSel = document.getElementById('filtroCanal').value;
   const tipoSel = document.getElementById('filtroTipo').value;
   const respSel = document.getElementById('filtroResp').value;
   const hoje = new Date().toISOString().slice(0,10);
 
   const filtradas = demandas.filter(d => {
     const bate = (d.titulo + d.tipo + d.responsavel).toLowerCase().includes(termo);
+    const bateCanal = !canalSel || d.canal === canalSel;
     const bateTipo = !tipoSel || d.tipo === tipoSel;
     const bateResp = !respSel || d.responsavel === respSel;
-    return bate && bateTipo && bateResp;
+    return bate && bateCanal && bateTipo && bateResp;
   });
 
   const grupos = [];
@@ -661,10 +687,12 @@ function renderKanban(){
     const tituloHtml = d.link
       ? `<a href="${d.link}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${d.titulo} <span style="color:var(--text-dim);">↗</span></a>`
       : d.titulo;
+    const cInfo = canalInfo(d.canal);
     return `
       <div class="card">
         <div class="titulo">${tituloHtml}</div>
         <div class="meta">
+          <span class="tag" style="background:${cInfo.color}22; color:${cInfo.color}; border-color:${cInfo.color}55;">${cInfo.icone} ${cInfo.label}</span>
           <span class="tag">${d.tipo}</span>
           <span class="tag resp">${d.responsavel}</span>
         </div>
@@ -762,8 +790,10 @@ function abrirModalCalendario(id){
     else if (dias <= 3) prazoTexto += ` (vence em ${dias}d)`;
   }
   const linkHtml = d.link ? `<div class="cal-modal-row"><a href="${d.link}" target="_blank" rel="noopener" class="cal-modal-link">Abrir no ClickUp ↗</a></div>` : '';
+  const cInfo = canalInfo(d.canal);
   document.getElementById('cal-modal-content').innerHTML = `
     <h4>${d.titulo}</h4>
+    <div class="cal-modal-row"><strong>Canal:</strong> ${cInfo.icone} ${cInfo.label}</div>
     <div class="cal-modal-row"><strong>Status:</strong> ${statusInfo.label || d.status}</div>
     <div class="cal-modal-row"><strong>Tipo:</strong> ${d.tipo}</div>
     <div class="cal-modal-row"><strong>Responsável:</strong> ${d.responsavel}</div>
@@ -779,6 +809,7 @@ function fecharModalCalendario(e){
 }
 
 document.getElementById('busca').addEventListener('input', renderKanban);
+document.getElementById('filtroCanal').addEventListener('change', renderKanban);
 document.getElementById('filtroTipo').addEventListener('change', renderKanban);
 document.getElementById('filtroResp').addEventListener('change', renderKanban);
 carregarDemandas();
