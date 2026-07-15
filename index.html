@@ -92,6 +92,21 @@
   .tile .delta.up{ color: var(--green); }
   .tile .delta.down{ color: var(--red); }
 
+  /* resumo do que vem agora */
+  .resumo-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:18px; }
+  .resumo-card{ background: var(--card); border:1px solid var(--card-border); border-radius:18px; padding:18px 20px; }
+  .resumo-card.atrasado{ border-color: var(--red); }
+  .resumo-card.hoje{ border-color: var(--accent); }
+  .resumo-card h3{ margin:0 0 8px; font-size:.92rem; font-family:'Poppins',sans-serif; display:flex; justify-content:space-between; align-items:center; color:var(--text); }
+  .resumo-card h3 .count{ background: var(--bg-soft); border-radius:999px; padding:2px 10px; font-size:.76rem; color:var(--text-dim); font-family:'Inter',sans-serif; }
+  .resumo-item{ font-size:.82rem; padding:9px 0; border-top:1px solid var(--card-border); cursor:pointer; display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .resumo-item:first-of-type{ border-top:none; padding-top:2px; }
+  .resumo-item:hover .resumo-item-titulo{ color: var(--accent-soft); }
+  .resumo-item-titulo{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .resumo-item-data{ color: var(--text-dim); white-space:nowrap; font-size:.76rem; flex-shrink:0; }
+  .resumo-empty{ color: var(--text-dim); font-size:.8rem; padding:4px 0; }
+  .resumo-mais{ color: var(--text-dim); font-size:.76rem; padding-top:6px; }
+
   .hero-stat{
     background: linear-gradient(120deg, var(--accent), #9c2f0b);
     border-radius: 20px;
@@ -293,6 +308,14 @@
       </ol>
       <p>Dica: peça pra eu fazer isso — eu consigo abrir o Instagram, ler os números e editar o arquivo pra você.</p>
     </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>O que vem agora</h2>
+      <span class="hint">Todos os canais, atualizado em tempo real</span>
+    </div>
+    <div class="resumo-grid" id="resumo-grid"></div>
   </section>
 
   <section>
@@ -581,8 +604,50 @@ function finalizarCarregamento(){
 }
 
 function renderTudo(){
+  renderResumo();
   renderKanban();
   renderCalendario();
+}
+
+// ---- resumo "o que vem agora" (Hoje / Semana / Atrasado, todos os canais) ----
+function renderResumo(){
+  const el = document.getElementById('resumo-grid');
+  if (!el) return;
+  const hoje = new Date().toISOString().slice(0,10);
+  const ativas = demandas.filter(d => d.status !== 'concluido');
+
+  const hojeList = ativas.filter(d => d.prazo === hoje);
+  const semanaList = ativas.filter(d => { const dias = diasEntre(hoje, d.prazo); return dias > 0 && dias <= 7; });
+  const atrasadoList = ativas.filter(d => diasEntre(hoje, d.prazo) < 0)
+    .sort((a,b) => a.prazo.localeCompare(b.prazo));
+  semanaList.sort((a,b) => a.prazo.localeCompare(b.prazo));
+
+  function itemHtml(d, mostrarData){
+    const cInfo = canalInfo(d.canal);
+    const dataTxt = mostrarData ? fmtData(d.prazo) : '';
+    return `<div class="resumo-item" onclick="abrirModalCalendario('${d.id}')">
+      <span class="resumo-item-titulo">${cInfo.icone} ${d.titulo}</span>
+      <span class="resumo-item-data">${dataTxt}</span>
+    </div>`;
+  }
+
+  function cardHtml(titulo, classe, lista, mostrarData, vazioTexto){
+    const max = 4;
+    const itens = lista.slice(0, max).map(d => itemHtml(d, mostrarData)).join('');
+    const resto = lista.length > max ? `<div class="resumo-mais">+ ${lista.length - max} outra${lista.length - max === 1 ? '' : 's'}</div>` : '';
+    const corpo = lista.length ? itens + resto : `<div class="resumo-empty">${vazioTexto}</div>`;
+    return `
+      <div class="resumo-card ${classe}">
+        <h3>${titulo} <span class="count">${lista.length}</span></h3>
+        ${corpo}
+      </div>
+    `;
+  }
+
+  el.innerHTML =
+    cardHtml('Hoje', 'hoje', hojeList, false, 'Nada previsto pra hoje') +
+    cardHtml('Próximos 7 dias', '', semanaList, true, 'Nada previsto pra essa semana') +
+    cardHtml('Atrasado', 'atrasado', atrasadoList, true, 'Nada atrasado 🎉');
 }
 
 // ---- mudar status de uma demanda (chamado pelo <select> do card) ----
